@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "engines": {
-    "node": "22.15.0"
+    "node": "18.20.8" // eb’s current Node.js platform on Amazon Linux 2 only supports 18.x.
   },
   "dependencies": {
     "dotenv": "^16.5.0",
