@@ -1,5 +1,3 @@
-aws-elastic-beanstalk-cli-setup/
-
 # Logs
 logs
 *.log
@@ -28,6 +26,13 @@ jspm_packages/
 # Virtual env directory
 venv/
 myvenv/
+
+#python
+__pycache__
+
+#AWS
+.elasticbeanstalk
+.ebextensions
 
 # Optional npm cache directory
 .npm
