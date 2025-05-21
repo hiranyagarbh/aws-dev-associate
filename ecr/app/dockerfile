@@ -1,8 +1,9 @@
-FROM 387543059434.dkr.ecr.ca-central-1.amazonaws.com/cruddur-python:3.10-slim-buster
+# FROM python:3.14.0b1-slim-bookworm
+FROM 820242917077.dkr.ecr.us-east-1.amazonaws.com/python:3.14.0b1-slim-bookworm
 
 # Inside Container
 # make a new folder inside container
-WORKDIR /backend-flask
+WORKDIR /app
 
 # Outside Container -> Inside Container
 # this contains the libraries want to install to run the app
@@ -10,12 +11,12 @@ COPY requirements.txt requirements.txt
 
 # Inside Container
 # Install the python libraries used for the app
-RUN pip3 install -r requirements.txt
+RUN pip install -r requirements.txt
 
 # Outside Container -> Inside Container
 # . means everything in the current directory
-# first period . - /backend-flask (outside container)
-# second period . /backend-flask (inside container)
+# first period . - /app (outside container)
+# second period . /app (inside container)
 COPY . .
 
 EXPOSE ${PORT}

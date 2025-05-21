@@ -1,18 +1,20 @@
-from flask import Flask
-from flask import request
-import os
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-@app.route("/api/messages/@<string:handle>", methods=['GET'])
+@app.route("/api/hello", methods=['GET'])
 def hello():
+    model = {}
     name = request.args.get('name')
-    model = {
-        errors: {msg:"Name not provided"},
-        data: {msg: "Hello {name}"}
-    }
-
-    if model['errors'] is not None:
-        return model['errors'], 422
+    if not name:
+        model['errors'] = {"msg": "Name not provided"}
     else:
-        return model['data'], 200
+        model['data'] = {"msg": f"Hello {name}!"}
+
+    if 'errors' in model and model['errors'] is not None:
+        return jsonify(model['errors']), 422
+    else:
+        return jsonify(model['data']), 200
+
+if __name__ == '__main__':
+    app.run(debug=True)
