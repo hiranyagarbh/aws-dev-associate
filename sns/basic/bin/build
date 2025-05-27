@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -ew
 
 # we need the absolute path of samconfig.toml
 # because relative path was giving us trouble
