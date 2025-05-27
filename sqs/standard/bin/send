@@ -1,0 +1,13 @@
+#!/bin/bash
+
+echo "Sending message to SQS queue..."
+
+root_path=$(realpath .)
+message_attributes_path="file://${root_path}/send-message.json"
+QUEUE_URL=https://sqs.us-east-1.amazonaws.com/820242917077/sqs-standard-MyQueue-oUyX0tdRZmAW
+
+# Send a message to the SQS queue
+aws sqs send-message \
+  --queue-url $QUEUE_URL \
+  --message-body "Hello world!" \
+  --message-attributes $message_attributes_path

@@ -1,0 +1,12 @@
+#!/bin/bash
+
+QUEUE_URL=https://sqs.us-east-1.amazonaws.com/820242917077/sqs-standard-MyQueue-oUyX0tdRZmAW
+
+echo "Received message: $1"
+echo "Processing message..."
+
+aws sqs receive-message \
+--queue-url $QUEUE_URL \
+--attribute-names All \
+--message-attribute-names All \
+--max-number-of-messages 10
