@@ -23,6 +23,7 @@ build/Release
 node_modules/
 jspm_packages/
 
+
 # Virtual env directory
 venv/
 myvenv/
@@ -33,6 +34,7 @@ __pycache__
 #AWS
 .elasticbeanstalk
 .ebextensions
+.aws-sam/
 
 # Optional npm cache directory
 .npm
