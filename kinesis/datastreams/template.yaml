@@ -1,0 +1,12 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: AWS CloudFormation template for creating a Kinesis Data Stream
+
+Resources:
+  MyStream:
+    Type: AWS::Kinesis::Stream
+    Properties:
+      # Name: MyStream
+      # RetentionPeriodHours: 24
+      ShardCount: 1
+      StreamModeDetails:
+        StreamMode: PROVISIONED
