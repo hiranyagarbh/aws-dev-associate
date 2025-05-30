@@ -1,0 +1,16 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Kinesis Firehose Delivery Stream Template
+
+Resources:
+  FirehoseDeliveryStream:
+    Type: AWS::KinesisFirehose::DeliveryStream
+    Properties:
+      DeliveryStreamName: !Sub "${AWS::StackName}-FirehoseDeliveryStream"
+      DeliveryStreamType: DirectPut
+      S3DestinationConfiguration:
+        BucketARN: !Ref S3Bucket
+        RoleARN: !GetAtt FirehoseRole.Arn
+        Prefix: !Sub "${AWS::StackName}/"
+        CompressionFormat: GZIP
+        EncryptionConfiguration:
+          NoEncryptionConfig: {}
