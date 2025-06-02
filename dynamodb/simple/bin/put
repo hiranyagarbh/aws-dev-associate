@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -e
+
+root_path=$(realpath .)
+item_path="file://${root_path}/item.json"
+
+table_name=db-table-SimpleTable-1GTS6OYQSFQZ
+
+aws dynamodb put-item \
+--table-name $table_name \
+--item $item_path

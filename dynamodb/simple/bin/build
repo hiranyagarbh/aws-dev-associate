@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -e
+
+root_path=$(realpath .)
+template_path="${root_path}/template.yml"
+
+# .aws-sam/build/template.yml
+echo "== SAM build..."
+echo "Using template: ${template_path}"
+sam build \
+  --template-file "${template_path}"
