@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+echo "== Deploying Secrets Manager Stack"
+
+STACK_NAME="secrets-manager-stack"
+
+aws-cloudformation deploy \
+    --template-file secrets-manager/template.yaml \
+    --stack-name $STACK_NAME \
+    --capabilities CAPABILITY_NAMED_IAM \
+    --no-execute-changeset \
+    --region us-east-1 \
