@@ -1,11 +1,19 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: Secrets Manager Stack
+
 Resources:
-  MySecret:
+  MySecretGenerated:
     Type: AWS::SecretsManager::Secret
     Properties:
+      Description: "Generated secret"
       GenerateSecretString:
         SecretStringTemplate: '{"username": "test-user"}'
         GenerateStringKey: "password"
         PasswordLength: 16
         ExcludeCharacters: '"@/\'
+
+  MySecretProvided:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Description: "Provided secret"
+      SecretString: "Testing1234!"
