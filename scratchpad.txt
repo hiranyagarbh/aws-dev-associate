@@ -1,0 +1,17 @@
+# Retrieve the list of all available metadata categories
+curl http://169.254.169.254/latest/meta-data/
+
+# Get the public IPv4 address assigned to this EC2 instance
+curl http://169.254.169.254/latest/meta-data/public-ipv4
+
+# Enable IMDSv2 (Instance Metadata Service Version 2) for enhanced security
+# This requires token-based authentication for metadata service requests
+
+aws ec2 modify-instance-metadata-options \
+--instance-id i-03c1a87c526ede133 \
+--http-tokens required \  # Requires token-based requests (IMDSv2)
+--region us-east-1        # Specify the AWS region where the instance is located
+
+TOKEN=$(
+    curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" --silent
+)
