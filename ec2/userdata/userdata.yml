@@ -1,0 +1,42 @@
+#cloud-config
+
+package_update: true
+package_upgrade: true
+packages:
+  - httpd
+
+write_files:
+  - path: /var/www/html/index.html
+    content: |
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Welcome to My Website</title>
+      </head>
+      <body>
+          <header>
+              <h1>Hello, World!</h1>
+          </header>
+          <main>
+              <section>
+                  <p>This is a custom HTML page served from my Apache server on EC2.</p>
+                  <p>Welcome to my website hosted on Amazon Web Services.</p>
+              </section>
+              <article>
+                  <h2>About This Server</h2>
+                  <p>This page is being served by Apache on an EC2 instance.</p>
+              </article>
+          </main>
+          <footer>
+              <p>&copy; 2023 My EC2 Website</p>
+          </footer>
+      </body>
+      </html>
+    owner: root:root
+    permissions: "0644"
+runcmd:
+  - systemctl start httpd.service
+  - systemctl enable httpd.service
+  - systemctl restart httpd.service
