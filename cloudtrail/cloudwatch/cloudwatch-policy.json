@@ -1,0 +1,13 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AWSCloudTrailCreateLogStream2014110",
+      "Effect": "Allow",
+      "Action": ["logs:CreateLogStream", "logs:PutLogEvents"],
+      "Resource": [
+        "arn:Aws:logs:us-east-1:0123456789012:log-group:log-group-name:log-stream:CloudTrail_log_stream_name_prefix*"
+      ]
+    }
+  ]
+}
