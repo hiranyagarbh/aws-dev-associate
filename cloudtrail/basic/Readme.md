@@ -14,3 +14,8 @@ aws cloudtrail create-trail \
 aws s3api put-bucket-policy \
 --bucket my-cloudtrail-ab-1212 \
 --policy file://cloudtrail/bucket-policy.json
+
+# Start logging
+
+aws cloudtrail start-logging \
+--name my-trail
