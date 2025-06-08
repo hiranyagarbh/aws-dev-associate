@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+echo "Deploy cfn stack update..."
+
+STACK_NAME="stack-update"
+
+aws cloudformation deploy \
+--stack-name $STACK_NAME \
+--capabilities CAPABILITY_NAMED_IAM \
+--template-file template.yaml \
+--no-execute-changeset \
+--region us-east-1
+
+echo "Stack update complete."
