@@ -1,0 +1,15 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: my-pseudo-bucket
+      Tags:
+        - Key: Region
+          Value: !Ref AWS::Region
+        - Key: StackName
+          Value: !Ref AWS::StackName
+        - Key: StackId
+          Value: !Ref AWS::StackId
+        - Key: AccountId
+          Value: !Ref AWS::AccountId
