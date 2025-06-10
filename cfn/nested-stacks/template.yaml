@@ -1,0 +1,12 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  BucketName:
+    Type: String
+    Default: MyBucket
+
+Resources:
+  MyStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://my-nested-stack-template-2323.s3.us-east-1.amazonaws.com/s3-bucket.template

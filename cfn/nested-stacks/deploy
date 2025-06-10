@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+echo "Deploying nested stack..."
+
+STACK_NAME="nested-stack"
+
+aws cloudformation deploy \
+--stack-name $STACK_NAME \
+--capabilities CAPABILITY_NAMED_IAM \
+--template-file template.yaml \
+--region us-east-1 \
+--no-execute-changeset
