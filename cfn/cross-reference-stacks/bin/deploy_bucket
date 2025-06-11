@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+echo "Deploy cfn cross-reference-stack - BUCKET..."
+
+STACK_NAME="cross-stack-bucket"
+
+aws cloudformation deploy \
+--stack-name $STACK_NAME \
+--capabilities CAPABILITY_NAMED_IAM \
+--template-file ../cfn/bucket.yaml \
+--no-execute-changeset \
+--region us-east-1
