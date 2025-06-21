@@ -1,0 +1,48 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Build started on `date`
+      - node --version
+      - npm --version
+
+  build:
+    commands:
+      - echo Installing dependencies...
+      - npm ci --only=production --silent
+      - echo Building static assets...
+      - npm run build --silent || echo "No build script found"
+
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Preparing deployment artifacts...
+
+artifacts:
+  files:
+    - "**/*"
+  exclude-paths:
+    - node_modules/**/*
+    - .git/**/*
+    - "*.log"
+    - coverage/**/*
+    - test/**/*
+    - tests/**/*
+    - __tests__/**/*
+    - "*.test.js"
+    - "*.spec.js"
+    - .nyc_output/**/*
+    - .eslintrc*
+    - .prettierrc*
+    - jest.config*
+    - webpack.config*
+
+cache:
+  paths:
+    - "node_modules/**/*"
+
+env:
+  variables:
+    NODE_ENV: production
+    CI: true

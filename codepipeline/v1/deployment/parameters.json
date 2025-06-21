@@ -1,0 +1,68 @@
+{
+  "dev": [
+    {
+      "ParameterKey": "ApplicationName",
+      "ParameterValue": "express-app"
+    },
+    {
+      "ParameterKey": "EnvironmentName",
+      "ParameterValue": "dev"
+    },
+    {
+      "ParameterKey": "InstanceType",
+      "ParameterValue": "t2.micro"
+    },
+    {
+      "ParameterKey": "KeyPairName",
+      "ParameterValue": ""
+    },
+    {
+      "ParameterKey": "SubnetId",
+      "ParameterValue": ""
+    }
+  ],
+  "staging": [
+    {
+      "ParameterKey": "ApplicationName",
+      "ParameterValue": "express-app"
+    },
+    {
+      "ParameterKey": "EnvironmentName",
+      "ParameterValue": "staging"
+    },
+    {
+      "ParameterKey": "InstanceType",
+      "ParameterValue": "t2.micro"
+    },
+    {
+      "ParameterKey": "KeyPairName",
+      "ParameterValue": "your-key-pair"
+    },
+    {
+      "ParameterKey": "SubnetId",
+      "ParameterValue": "subnet-xxxxxxxxx"
+    }
+  ],
+  "prod": [
+    {
+      "ParameterKey": "ApplicationName",
+      "ParameterValue": "express-app"
+    },
+    {
+      "ParameterKey": "EnvironmentName",
+      "ParameterValue": "prod"
+    },
+    {
+      "ParameterKey": "InstanceType",
+      "ParameterValue": "t2.micro"
+    },
+    {
+      "ParameterKey": "KeyPairName",
+      "ParameterValue": "your-prod-key-pair"
+    },
+    {
+      "ParameterKey": "SubnetId",
+      "ParameterValue": "subnet-xxxxxxxxx"
+    }
+  ]
+}

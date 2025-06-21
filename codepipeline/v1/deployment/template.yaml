@@ -1,0 +1,262 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Deployment template for Express.js application infrastructure"
+
+Parameters:
+  ApplicationName:
+    Type: String
+    Description: Name of the application
+    Default: "express-app"
+
+  EnvironmentName:
+    Type: String
+    Description: Environment name (dev, staging, prod)
+    Default: "dev"
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+
+  InstanceType:
+    Type: String
+    Description: EC2 instance type
+    Default: "t2.micro"
+    AllowedValues:
+      - t2.micro
+      - t3.micro
+
+  KeyPairName:
+    Type: String
+    Description: EC2 Key Pair for SSH access
+    Default: ""
+
+  SubnetId:
+    Type: String
+    Description: Subnet ID for the EC2 instance (leave empty for default)
+    Default: ""
+
+Conditions:
+  HasKeyPair: !Not [!Equals [!Ref KeyPairName, ""]]
+  HasSubnet: !Not [!Equals [!Ref SubnetId, ""]]
+
+Resources:
+  # Security Group for EC2 instance
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub "${ApplicationName}-${EnvironmentName}-sg"
+      GroupDescription: Security group for EC2 instance
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3000
+          ToPort: 3000
+          CidrIp: 0.0.0.0/0
+          Description: HTTP traffic to application
+        - !If
+          - HasKeyPair
+          - IpProtocol: tcp
+            FromPort: 22
+            ToPort: 22
+            CidrIp: 0.0.0.0/0
+            Description: SSH access
+          - !Ref "AWS::NoValue"
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+          Description: All outbound traffic
+
+  # IAM Role for EC2 instance
+  EC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ApplicationName}-${EnvironmentName}-ec2-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: BasicPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:DescribeLogStreams
+                Resource: "*"
+
+  # Instance Profile
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: !Sub "${ApplicationName}-${EnvironmentName}-instance-profile"
+      Roles:
+        - !Ref EC2Role
+
+  # Elastic IP
+  ElasticIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: !Sub "${ApplicationName}-${EnvironmentName}-eip"
+
+  # EC2 Instance
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0c02fb55956c7d316 # Amazon Linux 2 AMI (update for your region)
+      InstanceType: !Ref InstanceType
+      KeyName: !If [HasKeyPair, !Ref KeyPairName, !Ref "AWS::NoValue"]
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      SecurityGroupIds:
+        - !Ref EC2SecurityGroup
+      SubnetId: !If [HasSubnet, !Ref SubnetId, !Ref "AWS::NoValue"]
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+
+          # Install Node.js 16
+          curl -fsSL https://rpm.nodesource.com/setup_16.x | bash -
+          yum install -y nodejs
+
+          # Create application directory
+          mkdir -p /opt/${ApplicationName}
+          cd /opt/${ApplicationName}
+
+          # Create systemd service for the app
+          cat > /etc/systemd/system/${ApplicationName}.service << EOF
+          [Unit]
+          Description=${ApplicationName} Express.js Application
+          After=network.target
+
+          [Service]
+          Type=simple
+          User=ec2-user
+          WorkingDirectory=/opt/${ApplicationName}
+          Environment=NODE_ENV=production
+          Environment=PORT=3000
+          ExecStart=/usr/bin/node server.js
+          Restart=on-failure
+          RestartSec=10
+
+          [Install]
+          WantedBy=multi-user.target
+          EOF
+
+          # Create a simple Express.js app (placeholder)
+          cat > /opt/${ApplicationName}/server.js << EOF
+          const express = require('express');
+          const path = require('path');
+          const app = express();
+          const PORT = process.env.PORT || 3000;
+
+          // Serve static files
+          app.use(express.static('public'));
+
+          // Health check endpoint
+          app.get('/health', (req, res) => {
+            res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
+          });
+
+          // Root endpoint
+          app.get('/', (req, res) => {
+            res.json({
+              message: 'Hello from ${ApplicationName}!',
+              environment: '${EnvironmentName}',
+              version: '1.0.0'
+            });
+          });
+
+          app.listen(PORT, () => {
+            console.log(\`Server running on port \${PORT}\`);
+          });
+          EOF
+
+          # Create package.json
+          cat > /opt/${ApplicationName}/package.json << EOF
+          {
+            "name": "${ApplicationName}",
+            "version": "1.0.0",
+            "description": "Express.js application",
+            "main": "server.js",
+            "scripts": {
+              "start": "node server.js",
+              "build": "echo 'Build completed'",
+              "test": "echo 'No tests specified'"
+            },
+            "dependencies": {
+              "express": "^4.18.0"
+            },
+            "engines": {
+              "node": ">=16.0.0"
+            }
+          }
+          EOF
+
+          # Create public directory for static assets
+          mkdir -p /opt/${ApplicationName}/public
+
+          # Install dependencies
+          cd /opt/${ApplicationName}
+          npm install
+
+          # Set ownership
+          chown -R ec2-user:ec2-user /opt/${ApplicationName}
+
+          # Enable and start the service
+          systemctl daemon-reload
+          systemctl enable ${ApplicationName}
+          systemctl start ${ApplicationName}
+      Tags:
+        - Key: Name
+          Value: !Sub "${ApplicationName}-${EnvironmentName}-instance"
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Application
+          Value: !Ref ApplicationName
+
+  # Associate Elastic IP with Instance
+  EIPAssociation:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      InstanceId: !Ref EC2Instance
+      EIP: !Ref ElasticIP
+
+  # CloudWatch Log Group
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/ec2/${ApplicationName}-${EnvironmentName}"
+      RetentionInDays: 7
+
+Outputs:
+  InstancePublicIP:
+    Description: Public IP address of the EC2 instance
+    Value: !Ref ElasticIP
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicIP"
+
+  ApplicationURL:
+    Description: URL of the application
+    Value: !Sub "http://${ElasticIP}:3000"
+    Export:
+      Name: !Sub "${AWS::StackName}-ApplicationURL"
+
+  InstanceId:
+    Description: Instance ID of the EC2 instance
+    Value: !Ref EC2Instance
+    Export:
+      Name: !Sub "${AWS::StackName}-InstanceId"
+
+  SecurityGroupId:
+    Description: Security Group ID
+    Value: !Ref EC2SecurityGroup
+    Export:
+      Name: !Sub "${AWS::StackName}-SecurityGroup"
