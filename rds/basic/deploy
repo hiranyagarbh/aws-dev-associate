@@ -9,5 +9,5 @@ aws cloudformation deploy \
 --capabilities CAPABILITY_NAMED_IAM \
 --no-execute-changeset \
 --region us-east-1 \
---parameter-overrides ParameterKey1=ParameterValue1 \
+--parameter-overrides VpcId="vpc-013070e25b2f55353" WebServerSGGroupId="sg-072bf5156abc268de" RdsSecretArn="arn:aws:secretsmanager:us-east-1:820242917077:secret:MyRdsPassword-w5ksND" Username="hiranyagarbh" Subnets="subnet-08f1b53bff35e80c7,subnet-0ab59ac9f4fa342f4,subnet-06cd541b221ed6098" \
 --stack-name $STACK_NAME
