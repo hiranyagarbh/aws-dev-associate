@@ -2,7 +2,7 @@
 
 echo "== Deploying RDS Instance"
 
-STACK_NAME="rds=basic"
+STACK_NAME="rds-basic"
 
 aws cloudformation deploy \
 --template-file template.yaml \
