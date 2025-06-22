@@ -14,7 +14,7 @@ Parameters:
     Default: 0
   InstanceClass:
     Type: String
-    Default: db.t2.micro
+    Default: db.t3.micro
   EngineVersion:
     Type: String
     Default: "16.9"
