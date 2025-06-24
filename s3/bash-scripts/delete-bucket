@@ -1,1 +1,28 @@
 #!/bin/bash
+
+# Check if the first argument / bucket name is provided
+if [ $# -lt 1 ]; then
+    echo "No bucket name provided."
+    exit 1
+fi
+
+# Check if the bucket name is valid
+if ! [[ $1 =~ ^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$ ]]; then
+    echo "Invalid bucket name."
+    exit 1
+fi
+
+# Empty the bucket first (required before deletion)
+echo "Emptying bucket $1..."
+aws s3 rm s3://$1 --recursive
+
+# Delete the bucket
+aws s3api delete-bucket --bucket $1 --region us-east-1
+
+# Check if the bucket was deleted successfully
+if [ $? -eq 0 ]; then
+    echo "Bucket deleted successfully."
+else
+    echo "Failed to delete bucket."
+    exit 1
+fi

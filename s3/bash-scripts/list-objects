@@ -1,1 +1,24 @@
 #!/bin/bash
+
+# Check if the first argument / bucket name is provided
+if [ $# -lt 1 ]; then
+    echo "No bucket name provided."
+    exit 1
+fi
+
+# Check if the bucket name is valid
+if ! [[ $1 =~ ^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$ ]]; then
+    echo "Invalid bucket name."
+    exit 1
+fi
+
+# List objects in the bucket
+aws s3api list-objects-v2 --bucket $1
+
+# Check if the command was successful
+if [ $? -eq 0 ]; then
+    echo "Objects listed successfully."
+else
+    echo "Failed to list objects."
+    exit 1
+fi

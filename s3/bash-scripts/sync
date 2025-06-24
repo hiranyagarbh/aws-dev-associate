@@ -1,1 +1,52 @@
 #!/bin/bash
+
+# Check if both source and destination are provided
+if [ $# -lt 2 ]; then
+    echo "Usage: $0 <source> <destination>"
+    echo "source: Local directory path or S3 URI (s3://bucket/prefix)"
+    echo "destination: S3 URI (s3://bucket/prefix) or local directory path"
+    exit 1
+fi
+
+SOURCE="$1"
+DESTINATION="$2"
+
+# Function to validate S3 URI format
+validate_s3_uri() {
+    if [[ $1 =~ ^s3://[a-z0-9][a-z0-9-]{1,61}[a-z0-9](/.*)?$ ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Validate that at least one argument is an S3 URI
+if ! validate_s3_uri "$SOURCE" && ! validate_s3_uri "$DESTINATION"; then
+    echo "Error: At least one of source or destination must be an S3 URI (s3://bucket/prefix)"
+    exit 1
+fi
+
+# If source is local, check if directory exists
+if [[ ! "$SOURCE" =~ ^s3:// ]]; then
+    if [ ! -d "$SOURCE" ]; then
+        echo "Error: Local source directory '$SOURCE' does not exist."
+        exit 1
+    fi
+fi
+
+# If destination is local, create directory if it doesn't exist
+if [[ ! "$DESTINATION" =~ ^s3:// ]]; then
+    mkdir -p "$DESTINATION"
+fi
+
+# Perform the sync operation
+echo "Syncing from $SOURCE to $DESTINATION..."
+aws s3 sync "$SOURCE" "$DESTINATION"
+
+# Check if the sync was successful
+if [ $? -eq 0 ]; then
+    echo "Sync completed successfully."
+else
+    echo "Failed to sync."
+    exit 1
+fi

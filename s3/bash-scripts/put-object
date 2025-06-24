@@ -1,1 +1,57 @@
 #!/bin/bash
+
+# Check if bucket name is provided
+if [ $# -lt 1 ]; then
+    echo "Usage: $0 <bucket-name>"
+    echo "bucket-name: Name of the S3 bucket"
+    echo "This script will create and upload 1-10 random files to the bucket"
+    exit 1
+fi
+
+# Check if the bucket name is valid
+if ! [[ $1 =~ ^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$ ]]; then
+    echo "Invalid bucket name."
+    exit 1
+fi
+
+# Generate random number of files to create (between 1 and 10)
+NUM_FILES=$(( RANDOM % 10 + 1 ))
+echo "Creating and uploading $NUM_FILES files..."
+
+# Create temporary directory for files
+TEMP_DIR=$(mktemp -d)
+UPLOAD_COUNT=0
+
+# Generate and upload files
+for i in $(seq 1 $NUM_FILES); do
+    # Create random filename with timestamp
+    FILENAME="file_$(date +%Y%m%d_%H%M%S)_${i}.txt"
+    FILEPATH="$TEMP_DIR/$FILENAME"
+
+    # Generate random content for the file
+    echo "Random file #$i created at $(date)" > "$FILEPATH"
+    echo "Random content: $(openssl rand -hex 16)" >> "$FILEPATH"
+    echo "File size: $(du -h "$FILEPATH" | cut -f1)" >> "$FILEPATH"
+
+    # Upload the file to S3
+    aws s3api put-object --bucket $1 --key "$FILENAME" --body "$FILEPATH"
+
+    # Check if the upload was successful
+    if [ $? -eq 0 ]; then
+        echo "File $i/$NUM_FILES uploaded successfully: s3://$1/$FILENAME"
+        ((UPLOAD_COUNT++))
+    else
+        echo "Failed to upload file $i/$NUM_FILES: $FILENAME"
+    fi
+done
+
+# Clean up temporary files
+rm -rf "$TEMP_DIR"
+
+# Final status report
+if [ $UPLOAD_COUNT -eq $NUM_FILES ]; then
+    echo "All $NUM_FILES files uploaded successfully."
+else
+    echo "Upload completed with errors: $UPLOAD_COUNT/$NUM_FILES files uploaded successfully."
+    exit 1
+fi
