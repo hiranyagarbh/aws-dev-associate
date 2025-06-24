@@ -13,7 +13,8 @@ if ! [[ $1 =~ ^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$ ]]; then
 fi
 
 # List objects in the bucket
-aws s3api list-objects-v2 --bucket $1
+aws s3api list-objects-v2 --bucket "$1" --query 'Contents[].{Key: Key, LastModified: LastModified}' --output table
+
 
 # Check if the command was successful
 if [ $? -eq 0 ]; then
