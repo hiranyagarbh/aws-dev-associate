@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# Check if the first argument / bucket name is provided
+if [ $# -lt 1 ]; then
+    echo "No bucket name provided."
+    exit 1
+fi
+
+# Check if the bucket name is valid
+if ! [[ $1 =~ ^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$ ]]; then
+    echo "Invalid bucket name."
+    exit 1
+fi
+
+# Create the bucket
+aws s3api create-bucket --bucket $1 --region us-east-1
+
+# Check if the bucket was created successfully
+if [ $? -eq 0 ]; then
+    echo "Bucket created successfully."
+else
+    echo "Failed to create bucket."
+    exit 1
+fi
