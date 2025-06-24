@@ -1,0 +1,88 @@
+#!/bin/bash
+
+# Check if bucket name is provided
+if [ $# -lt 1 ]; then
+    echo "Usage: $0 <bucket-name>"
+    echo "bucket-name: Name of the S3 bucket to get information about"
+    exit 1
+fi
+
+# Check if the bucket name is valid
+if ! [[ $1 =~ ^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$ ]]; then
+    echo "Invalid bucket name."
+    exit 1
+fi
+
+BUCKET_NAME="$1"
+
+# Check if bucket exists
+aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null
+if [ $? -ne 0 ]; then
+    echo "Bucket '$BUCKET_NAME' does not exist or you don't have access to it."
+    exit 1
+fi
+
+echo "=== Bucket Information for: $BUCKET_NAME ==="
+echo
+
+# Get bucket location
+REGION=$(aws s3api get-bucket-location --bucket "$BUCKET_NAME" --output text 2>/dev/null)
+if [ "$REGION" = "None" ] || [ -z "$REGION" ]; then
+    REGION="us-east-1"
+fi
+echo "Region: $REGION"
+
+# Get bucket creation date
+CREATION_DATE=$(aws s3api list-buckets --query "Buckets[?Name=='$BUCKET_NAME'].CreationDate" --output text 2>/dev/null)
+if [ -n "$CREATION_DATE" ]; then
+    FORMATTED_DATE=$(echo "$CREATION_DATE" | cut -d'T' -f1)
+    echo "Creation Date: $FORMATTED_DATE"
+fi
+
+# Get versioning status
+VERSIONING=$(aws s3api get-bucket-versioning --bucket "$BUCKET_NAME" --query 'Status' --output text 2>/dev/null)
+if [ "$VERSIONING" = "None" ] || [ -z "$VERSIONING" ]; then
+    VERSIONING="Disabled"
+fi
+echo "Versioning: $VERSIONING"
+
+# Get encryption status
+ENCRYPTION=$(aws s3api get-bucket-encryption --bucket "$BUCKET_NAME" --query 'ServerSideEncryptionConfiguration.Rules[0].ApplyServerSideEncryptionByDefault.SSEAlgorithm' --output text 2>/dev/null)
+if [ "$ENCRYPTION" = "None" ] || [ -z "$ENCRYPTION" ]; then
+    ENCRYPTION="Not configured"
+fi
+echo "Encryption: $ENCRYPTION"
+
+# Get object count and total size
+echo "Calculating bucket statistics..."
+STATS=$(aws s3 ls s3://"$BUCKET_NAME" --recursive --summarize 2>/dev/null | tail -2)
+if [ -n "$STATS" ]; then
+    OBJECT_COUNT=$(echo "$STATS" | grep "Total Objects:" | awk '{print $3}')
+    TOTAL_SIZE=$(echo "$STATS" | grep "Total Size:" | awk '{print $3}')
+
+    if [ -n "$OBJECT_COUNT" ]; then
+        echo "Object Count: $OBJECT_COUNT"
+    else
+        echo "Object Count: 0"
+    fi
+
+    if [ -n "$TOTAL_SIZE" ]; then
+        echo "Total Size: $TOTAL_SIZE bytes"
+    else
+        echo "Total Size: 0 bytes"
+    fi
+else
+    echo "Object Count: 0"
+    echo "Total Size: 0 bytes"
+fi
+
+# Get public access block settings
+PUBLIC_ACCESS=$(aws s3api get-public-access-block --bucket "$BUCKET_NAME" --query 'PublicAccessBlockConfiguration' --output json 2>/dev/null)
+if [ -n "$PUBLIC_ACCESS" ] && [ "$PUBLIC_ACCESS" != "null" ]; then
+    echo "Public Access: Blocked"
+else
+    echo "Public Access: Not configured"
+fi
+
+echo
+echo "Bucket information retrieved successfully."

@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# Check for jq dependency
+if ! command -v jq &> /dev/null; then
+    echo "'jq' is required but not installed. Install it and retry."
+    exit 1
+fi
+
+# Check if no arguments are provided (this script doesn't need any)
+if [ $# -gt 0 ]; then
+    echo "Usage: $0"
+    echo "This script lists all S3 buckets in your AWS account in table format"
+    exit 1
+fi
+
+# Get bucket list in JSON format
+BUCKET_JSON=$(aws s3api list-buckets --output json)
+
+# Check if the command was successful
+if [ $? -ne 0 ]; then
+    echo "Failed to list buckets."
+    exit 1
+fi
+
+# Print table header
+printf "%-30s %-25s %-15s\n" "BUCKET NAME" "CREATION DATE" "REGION"
+printf "%-30s %-25s %-15s\n" "----------" "-------------" "------"
+
+# Parse JSON and format each bucket
+echo "$BUCKET_JSON" | jq -r '.Buckets[] | "\(.Name) \(.CreationDate)"' | while read -r bucket_name creation_date; do
+    # Get bucket region
+    REGION=$(aws s3api get-bucket-location --bucket "$bucket_name" --output text 2>/dev/null)
+
+    # Handle empty region (us-east-1 returns null)
+    if [ "$REGION" = "None" ] || [ -z "$REGION" ]; then
+        REGION="us-east-1"
+    fi
+
+    # Format creation date (remove time for cleaner display)
+    FORMATTED_DATE=$(echo "$creation_date" | cut -d'T' -f1)
+
+    # Print formatted row
+    printf "%-30s %-25s %-15s\n" "$bucket_name" "$FORMATTED_DATE" "$REGION"
+done
+
+# Check if any buckets were found
+BUCKET_COUNT=$(echo "$BUCKET_JSON" | jq -r '.Buckets | length')
+if [ "$BUCKET_COUNT" -eq 0 ]; then
+    echo "No buckets found in your AWS account."
+else
+    echo ""
+    echo "Total buckets: $BUCKET_COUNT"
+fi

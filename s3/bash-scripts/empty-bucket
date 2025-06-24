@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# Check if bucket name is provided
+if [ $# -lt 1 ]; then
+    echo "Usage: $0 <bucket-name>"
+    echo "bucket-name: Name of the S3 bucket to empty"
+    echo "WARNING: This will delete ALL objects in the bucket!"
+    exit 1
+fi
+
+# Check if the bucket name is valid
+if ! [[ $1 =~ ^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$ ]]; then
+    echo "Invalid bucket name."
+    exit 1
+fi
+
+# Confirmation prompt for safety
+echo "WARNING: This will permanently delete ALL objects in bucket '$1'."
+read -p "Are you sure you want to continue? (y/n): " confirmation
+
+if [ "$confirmation" != "y" ]; then
+    echo "Operation cancelled."
+    exit 0
+fi
+
+# Get object count for progress tracking
+OBJECT_COUNT=$(aws s3api list-objects-v2 --bucket "$1" --query 'length(Contents)' --output text 2>/dev/null)
+
+if [ "$OBJECT_COUNT" = "None" ] || [ -z "$OBJECT_COUNT" ]; then
+    OBJECT_COUNT=0
+fi
+
+echo "Found $OBJECT_COUNT objects in bucket '$1'."
+
+if [ "$OBJECT_COUNT" -eq 0 ]; then
+    echo "Bucket is already empty."
+    exit 0
+fi
+
+# Empty the bucket
+echo "Emptying bucket '$1'..."
+aws s3 rm s3://$1 --recursive
+
+# Check if the operation was successful
+if [ $? -eq 0 ]; then
+    echo "Bucket emptied successfully."
+else
+    echo "Failed to empty bucket."
+    exit 1
+fi
