@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "== Deleting S3 bucket via CloudFormation..."
+echo "== Deleting S3 Bucket Stack via CloudFormation..."
 
 STACK_NAME="s3-bucket-stack"
 

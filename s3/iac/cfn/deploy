@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "== Deploying S3 bucket via CloudFormation..."
+echo "== Deploying S3 bucket Stack via CloudFormation..."
 
 STACK_NAME="s3-bucket-stack"
 
