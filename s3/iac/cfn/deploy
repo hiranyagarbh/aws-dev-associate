@@ -1,0 +1,12 @@
+#!/bin/bash
+
+echo "== Deploying S3 bucket via CloudFormation..."
+
+STACK_NAME="s3-bucket-stack"
+
+aws cloudformation deploy \
+--template-file template.yaml \
+--stack-name $STACK_NAME \
+--capabilities CAPABILITY_NAMED_IAM \
+--no-execute-changeset \
+--region us-east-1
