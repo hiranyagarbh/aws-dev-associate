@@ -1,0 +1,9 @@
+#!/bin/bash
+
+echo "== Deleting S3 bucket via CloudFormation..."
+
+STACK_NAME="s3-bucket-stack"
+
+aws cloudformation delete-stack \
+--stack-name $STACK_NAME \
+--region us-east-1
