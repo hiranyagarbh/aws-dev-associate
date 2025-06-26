@@ -30,3 +30,14 @@ aws s3api head-object \
 --bucket my-metadata-1212 \
 --key hello.txt
 ```
+
+# Cleanup
+
+```sh
+aws s3api delete-object \
+--bucket my-metadata-1212 \
+--key hello.txt
+
+aws s3api delete-bucket \
+--bucket my-metadata-1212
+```
