@@ -6,6 +6,8 @@ aws s3 mb s3://endpoint-bucket-2323
 
 ## Upload a file to S3 using standard endpoint
 
+> https://docs.aws.amazon.com/general/latest/gr/s3.html
+
 ```sh
 touch standard.txt
 aws s3 cp standard.txt s3://endpoint-bucket-2323/standard.txt \
