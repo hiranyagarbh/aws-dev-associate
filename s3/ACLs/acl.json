@@ -1,0 +1,16 @@
+{
+  "Grants": [
+    {
+      "Grantee": {
+        "DisplayName": "hiranygarbh",
+        "ID": "__CanonicalUserId__",
+        "Type": "CanonicalUser"
+      },
+      "Permission": "FULL_CONTROL"
+    }
+  ],
+  "Owner": {
+    "DisplayName": "hiranygarbh",
+    "ID": "__CanonicalUserId__"
+  }
+}
