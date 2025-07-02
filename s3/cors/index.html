@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>AWS CORS Example - Cross-Origin Resource Sharing</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+                line-height: 1.6;
+                color: #333;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 0 20px;
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .hero {
+                text-align: center;
+                background: rgba(255, 255, 255, 0.95);
+                padding: 60px 40px;
+                border-radius: 20px;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+                backdrop-filter: blur(10px);
+                margin: 20px 0;
+                max-width: 800px;
+                width: 100%;
+            }
+
+            .hero h1 {
+                font-size: 3.5rem;
+                margin-bottom: 20px;
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                font-weight: 700;
+            }
+
+            .hero .subtitle {
+                font-size: 1.3rem;
+                color: #666;
+                margin-bottom: 30px;
+                font-weight: 300;
+            }
+
+            .hero p {
+                font-size: 1.1rem;
+                color: #555;
+                margin-bottom: 40px;
+                max-width: 600px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .features {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 30px;
+                margin-top: 40px;
+                width: 100%;
+            }
+
+            .feature-card {
+                background: rgba(255, 255, 255, 0.9);
+                padding: 30px;
+                border-radius: 15px;
+                text-align: center;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+                transition:
+                    transform 0.3s ease,
+                    box-shadow 0.3s ease;
+            }
+
+            .feature-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            }
+
+            .feature-icon {
+                width: 60px;
+                height: 60px;
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                border-radius: 50%;
+                margin: 0 auto 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 24px;
+                color: white;
+            }
+
+            .feature-card h3 {
+                font-size: 1.3rem;
+                margin-bottom: 15px;
+                color: #333;
+            }
+
+            .feature-card p {
+                color: #666;
+                font-size: 0.95rem;
+                line-height: 1.5;
+            }
+
+            .status-badge {
+                display: inline-block;
+                background: linear-gradient(135deg, #4caf50, #45a049);
+                color: white;
+                padding: 8px 20px;
+                border-radius: 25px;
+                font-size: 0.9rem;
+                font-weight: 500;
+                margin-bottom: 20px;
+            }
+
+            .tech-stack {
+                margin-top: 40px;
+                text-align: center;
+            }
+
+            .tech-stack h3 {
+                color: #555;
+                margin-bottom: 20px;
+                font-size: 1.1rem;
+            }
+
+            .tech-badges {
+                display: flex;
+                justify-content: center;
+                gap: 15px;
+                flex-wrap: wrap;
+            }
+
+            .tech-badge {
+                background: rgba(255, 255, 255, 0.8);
+                padding: 8px 16px;
+                border-radius: 20px;
+                font-size: 0.85rem;
+                color: #555;
+                border: 2px solid rgba(102, 126, 234, 0.3);
+            }
+
+            footer {
+                text-align: center;
+                padding: 20px;
+                color: rgba(255, 255, 255, 0.8);
+                font-size: 0.9rem;
+            }
+
+            @media (max-width: 768px) {
+                .hero {
+                    padding: 40px 20px;
+                    margin: 10px;
+                }
+
+                .hero h1 {
+                    font-size: 2.5rem;
+                }
+
+                .hero .subtitle {
+                    font-size: 1.1rem;
+                }
+
+                .features {
+                    grid-template-columns: 1fr;
+                    gap: 20px;
+                }
+
+                .tech-badges {
+                    gap: 10px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="hero">
+                <div class="status-badge">✓ CORS Enabled</div>
+                <h1>AWS CORS</h1>
+                <div class="subtitle">
+                    Cross-Origin Resource Sharing Made Simple
+                </div>
+                <p>
+                    This application demonstrates proper CORS configuration for
+                    AWS services, enabling secure cross-origin requests between
+                    different domains while maintaining robust security
+                    standards.
+                </p>
+
+                <div class="features">
+                    <div class="feature-card">
+                        <div class="feature-icon">🌐</div>
+                        <h3>Cross-Domain Access</h3>
+                        <p>
+                            Securely access resources from different domains
+                            with properly configured CORS headers
+                        </p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">🔒</div>
+                        <h3>Security First</h3>
+                        <p>
+                            Implements best practices for CORS security while
+                            maintaining functionality
+                        </p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">⚡</div>
+                        <h3>AWS Optimized</h3>
+                        <p>
+                            Configured specifically for AWS services including
+                            S3, API Gateway, and CloudFront
+                        </p>
+                    </div>
+                </div>
+
+                <div class="tech-stack">
+                    <h3>Technologies Used</h3>
+                    <div class="tech-badges">
+                        <span class="tech-badge">AWS S3</span>
+                        <span class="tech-badge">CORS Headers</span>
+                        <span class="tech-badge">HTML5</span>
+                        <span class="tech-badge">CSS3</span>
+                        <span class="tech-badge">Responsive Design</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>
+                &copy; 2025 AWS CORS Example. Built for demonstration purposes.
+            </p>
+        </footer>
+    </body>
+</html>
