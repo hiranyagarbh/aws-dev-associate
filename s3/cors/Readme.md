@@ -62,3 +62,25 @@ aws s3api get-bucket-website \
 ```
 
 ## Apply a CORS policy
+
+```sh
+aws s3api put-bucket-cors \
+--bucket my-cors-bucket012 \
+--cors-configuration file://cors.json
+```
+
+## Cleanup
+
+```sh
+aws s3api delete-object \
+--bucket my-cors-bucket012 \
+--key index.html
+
+aws s3api delete-object \
+--bucket my-cors-bucket012 \
+--key error.html
+
+aws s3api delete-bucket \
+--bucket my-cors-bucket012 \
+--region us-east-1
+```
