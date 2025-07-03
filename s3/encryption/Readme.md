@@ -41,7 +41,7 @@ aws kms create-key
 export BASE64_ENCODED_KEY=$(openssl rand -base64 32)
 echo $BASE64_ENCODED_KEY
 
-export ENCODED_KEY_MD5=$(echo -n $BASE64_ENCODED_KEY | base64 --decode | md5sum | awk '{print $1}' | base64)
+export ENCODED_KEY_MD5=$(echo -n $BASE64_ENCODED_KEY | base64 --decode | md5sum | awk '{print $1}' | base64 -w0)
 
 ```
 
