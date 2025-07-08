@@ -1,0 +1,16 @@
+{
+  "Role": "arn:aws:iam::123456789012:role/ReplicationRole",
+  "Rules": [
+    {
+      "ID": "ReplicateAllObjects",
+      "Filter": {
+        "Prefix": ""
+      },
+      "Status": "Enabled",
+      "Priority": 1,
+      "Destination": {
+        "Bucket": "arn:aws:s3:::rep-bucket-hg-5656"
+      }
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutReplicationConfiguration",
+        "s3:GetReplicationConfiguration",
+        "s3:GetBucketVersioning",
+        "s3:GetObjectVersionForReplication",
+        "s3:GetObjectVersionAcl",
+        "s3:GetObject",
+        "s3:ListBucket",
+        "s3:GetObjectVersion"
+      ],
+      "Resource": [
+        "arn:aws:s3:::rep-bucket-hg-2323",
+        "arn:aws:s3:::rep-bucket-hg-2323/*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["s3:List*AccessPoint*", "s3:GetMultiRegion*"],
+      "Resource": "*"
+    }
+  ]
+}
