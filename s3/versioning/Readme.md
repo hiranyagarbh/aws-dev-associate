@@ -107,3 +107,53 @@ aws s3api get-object \
 --version-id HUluuazFw4CR0W4qzT5_Ubzpj1l0OEUl \
 --key file.txt /dev/stdout | cat
 ```
+
+## turn on MFA
+
+```sh
+aws s3api put-bucket-versioning \
+--bucket ver-bucket-1212 \
+--versioning-configuration Status=Enabled,MFADelete=Enabled
+
+# check versioning configuration
+aws s3api get-bucket-versioning --bucket ver-bucket-1212
+
+# expected output:
+# {
+#     "Status": "Enabled",
+#     "MFADelete": "Enabled"
+# }
+```
+
+## turn off MFA
+
+```sh
+aws s3api put-bucket-versioning \
+--bucket ver-bucket-1212 \
+--versioning-configuration Status=Enabled,MFADelete=Disabled
+
+# check versioning configuration
+aws s3api get-bucket-versioning --bucket ver-bucket-1212
+
+# expected output:
+# {
+#     "Status": "Enabled",
+#     "MFADelete": "Disabled"
+# }
+```
+
+## turn off versioning
+
+```sh
+aws s3api put-bucket-versioning \
+--bucket ver-bucket-1212 \
+--versioning-configuration Status=Disabled
+
+# check versioning configuration
+aws s3api get-bucket-versioning --bucket ver-bucket-1212
+
+# expected output:
+# {
+#     "Status": "Disabled"
+# }
+```
