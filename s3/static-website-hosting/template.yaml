@@ -1,0 +1,106 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Static Website Hosting for SPA using CloudFront Origin Access Control"
+
+Parameters:
+  NakedDomainName:
+    Type: String
+    Default: "rocketrecipe.com"
+    Description: "The naked domain name (without www)"
+
+Resources:
+  # Naked Domain Bucket (redirects to www)
+  NakedBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref NakedDomainName
+      WebsiteConfiguration:
+        RedirectAllRequestsTo:
+          HostName: !Sub "www.${NakedDomainName}"
+          Protocol: "https"
+
+  # WWW Bucket (hosts the actual content)
+  WWWBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "www.${NakedDomainName}"
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+      # temporary setup
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: false
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: false
+
+  # Origin Access Control for CloudFront
+  # OriginAccessControl:
+  #   Type: AWS::CloudFront::OriginAccessControl
+  #   Properties:
+  #     OriginAccessControlConfig:
+  #       Name: !Sub "${AWS::StackName}-OAC"
+  #       OriginAccessControlOriginType: s3
+  #       SigningBehavior: always
+  #       SigningProtocol: sigv4
+
+  # CloudFront Distribution
+  # CloudFrontDistribution:
+  #   Type: AWS::CloudFront::Distribution
+  #   Properties:
+  #     DistributionConfig:
+  #       Enabled: true
+  #       DefaultRootObject: index.html
+  #       Origins:
+  #         - Id: S3Origin
+  #           DomainName: !GetAtt WWWBucket.RegionalDomainName
+  #           S3OriginConfig:
+  #             OriginAccessIdentity: ""
+  #           OriginAccessControlId: !GetAtt OriginAccessControl.Id
+  #       DefaultCacheBehavior:
+  #         TargetOriginId: S3Origin
+  #         ViewerProtocolPolicy: redirect-to-https
+  #         CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6  # Managed-CachingOptimized
+  #         Compress: true
+  #       # SPA routing - handle 403/404 by serving index.html
+  #       CustomErrorResponses:
+  #         - ErrorCode: 403
+  #           ResponseCode: 200
+  #           ResponsePagePath: /index.html
+  #           ErrorCachingMinTTL: 300
+  #         - ErrorCode: 404
+  #           ResponseCode: 200
+  #           ResponsePagePath: /index.html
+  #           ErrorCachingMinTTL: 300
+  #       PriceClass: PriceClass_100
+  #       HttpVersion: http2
+
+  # Bucket Policy for CloudFront OAC
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref WWWBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Action:
+              - "s3:GetObject"
+            Effect: Allow
+            Resource: !Sub "arn:aws:s3:::www.${NakedDomainName}/*"
+            Principal: "*"
+
+Outputs:
+  NakedBucketURL:
+    Description: "URL of the naked domain bucket (redirects to www)"
+    Value: !GetAtt NakedBucket.WebsiteURL
+
+  WWWBucketURL:
+    Description: "URL of the www bucket"
+    Value: !GetAtt WWWBucket.WebsiteURL
+
+  # CloudFrontDistributionURL:
+  #   Description: "CloudFront Distribution URL"
+  #   Value: !Sub "https://${CloudFrontDistribution.DomainName}"
+
+  # CloudFrontDistributionId:
+  #   Description: "CloudFront Distribution ID"
+  #   Value: !Ref CloudFrontDistribution
