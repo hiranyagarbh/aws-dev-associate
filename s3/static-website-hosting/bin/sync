@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+echo "== Syncing build to S3..."
+aws s3 sync ../app/build s3://www.rocketrecipe.com
+echo "== Syncing complete!"
