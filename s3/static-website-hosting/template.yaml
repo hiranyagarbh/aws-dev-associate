@@ -33,47 +33,6 @@ Resources:
         IgnorePublicAcls: true
         RestrictPublicBuckets: false
 
-  # Origin Access Control for CloudFront
-  # OriginAccessControl:
-  #   Type: AWS::CloudFront::OriginAccessControl
-  #   Properties:
-  #     OriginAccessControlConfig:
-  #       Name: !Sub "${AWS::StackName}-OAC"
-  #       OriginAccessControlOriginType: s3
-  #       SigningBehavior: always
-  #       SigningProtocol: sigv4
-
-  # CloudFront Distribution
-  # CloudFrontDistribution:
-  #   Type: AWS::CloudFront::Distribution
-  #   Properties:
-  #     DistributionConfig:
-  #       Enabled: true
-  #       DefaultRootObject: index.html
-  #       Origins:
-  #         - Id: S3Origin
-  #           DomainName: !GetAtt WWWBucket.RegionalDomainName
-  #           S3OriginConfig:
-  #             OriginAccessIdentity: ""
-  #           OriginAccessControlId: !GetAtt OriginAccessControl.Id
-  #       DefaultCacheBehavior:
-  #         TargetOriginId: S3Origin
-  #         ViewerProtocolPolicy: redirect-to-https
-  #         CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6  # Managed-CachingOptimized
-  #         Compress: true
-  #       # SPA routing - handle 403/404 by serving index.html
-  #       CustomErrorResponses:
-  #         - ErrorCode: 403
-  #           ResponseCode: 200
-  #           ResponsePagePath: /index.html
-  #           ErrorCachingMinTTL: 300
-  #         - ErrorCode: 404
-  #           ResponseCode: 200
-  #           ResponsePagePath: /index.html
-  #           ErrorCachingMinTTL: 300
-  #       PriceClass: PriceClass_100
-  #       HttpVersion: http2
-
   # Bucket Policy for CloudFront OAC
   BucketPolicy:
     Type: AWS::S3::BucketPolicy
@@ -96,11 +55,3 @@ Outputs:
   WWWBucketURL:
     Description: "URL of the www bucket"
     Value: !GetAtt WWWBucket.WebsiteURL
-
-  # CloudFrontDistributionURL:
-  #   Description: "CloudFront Distribution URL"
-  #   Value: !Sub "https://${CloudFrontDistribution.DomainName}"
-
-  # CloudFrontDistributionId:
-  #   Description: "CloudFront Distribution ID"
-  #   Value: !Ref CloudFrontDistribution
