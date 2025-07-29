@@ -1,0 +1,27 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "S3ServerAccessLogsBucket",
+      "Effect": "Allow",
+      "Principal": { "Service": "s3.amazonaws.com" },
+      "Action": "s3:GetBucketAcl",
+      "Resource": "arn:aws:s3:::server-logs-destination-1212",
+      "Condition": {
+        "ArnLike": { "aws:SourceArn": "arn:aws:s3:::server-logs-source-1212" },
+        "StringEquals": { "aws:SourceAccount": "820242917077" }
+      }
+    },
+    {
+      "Sid": "S3ServerAccessLogsObjects",
+      "Effect": "Allow",
+      "Principal": { "Service": "s3.amazonaws.com" },
+      "Action": ["s3:PutObject", "s3:PutObjectAcl"],
+      "Resource": "arn:aws:s3:::server-logs-destination-1212/Logs/*",
+      "Condition": {
+        "ArnLike": { "aws:SourceArn": "arn:aws:s3:::server-logs-source-1212" },
+        "StringEquals": { "aws:SourceAccount": "820242917077" }
+      }
+    }
+  ]
+}
