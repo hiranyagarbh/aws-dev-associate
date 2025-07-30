@@ -20,7 +20,7 @@
       "Resource": "arn:aws:s3:::server-logs-destination-1212/Logs/*",
       "Condition": {
         "ArnLike": { "aws:SourceArn": "arn:aws:s3:::server-logs-source-1212" },
-        "StringEquals": { "aws:SourceAccount": "820242917077" }
+        "StringEquals": { "aws:SourceAccount": "1234567890" }
       }
     }
   ]
