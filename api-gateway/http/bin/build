@@ -1,0 +1,9 @@
+#!/bin/bash
+
+root_path=$(realpath .)
+template_path="${root_path}/template.yml"
+
+echo "SAM Build - Building API Gateway HTTP service using template ${template_path}."
+
+sam build \
+--template-file "${template_path}"

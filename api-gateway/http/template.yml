@@ -1,0 +1,22 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: "Serverless HTTP API with AWS::Serverless-2016-10-31"
+Resources:
+  Lambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler
+      Runtime: python3.8
+      PackageType: Zip
+      InlineCode: |
+        def handler(event, context):
+            return {
+                'statusCode': 200,
+                'body': 'Hello, World!'
+            }
+    Events:
+      ApiEvent:
+        Type: Api
+        Properties:
+          Path: /hello
+          Method: get

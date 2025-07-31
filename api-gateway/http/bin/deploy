@@ -1,0 +1,9 @@
+root_path=$(realpath .)
+template_path="${root_path}/template.yml"
+
+echo "SAM Deploying API Gateway HTTP service..."
+
+sam deploy \
+--stack-name api-gateway-http-lambda \
+--template-file "${template_path}" \
+--capabilities CAPABILITY_IAM
