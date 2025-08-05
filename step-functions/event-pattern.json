@@ -1,0 +1,12 @@
+{
+  "source": ["aws.s3"],
+  "detail-type": ["Object Created"],
+  "detail": {
+    "bucket": {
+      "name": ["step-funct-1212"]
+    },
+    "object": {
+      "key": [{ "prefix": "inputs/" }]
+    }
+  }
+}
