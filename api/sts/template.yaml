@@ -1,0 +1,68 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Create a role for us to assume and resource we'll have access to.
+Parameters:
+  BucketName:
+    Type: String
+    Default: "sts-bucket-1212"
+  TrustedUserArn:
+    Type: String
+    Default: "arn:aws:iam::123456789012:user/sts-machine-user"
+    Description: ARN of the user who can assume this role
+Resources:
+  Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketName
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  StsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${AWS::StackName}-StsRole"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref TrustedUserArn
+            Action: "sts:AssumeRole"
+            Condition:
+              StringEquals:
+                "sts:ExternalId": !Sub "${AWS::StackName}-external-id"
+      Policies:
+        - PolicyName: STS_S3AccessPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "s3:GetObject"
+                  - "s3:PutObject"
+                  - "s3:DeleteObject"
+                  - "s3:ListBucket"
+                Resource:
+                  - !Sub "arn:aws:s3:::${BucketName}"
+                  - !Sub "arn:aws:s3:::${BucketName}/*"
+
+Outputs:
+  BucketName:
+    Description: Name of the created S3 bucket
+    Value: !Ref Bucket
+    Export:
+      Name: !Sub "${AWS::StackName}-BucketName"
+
+  RoleArn:
+    Description: ARN of the STS role
+    Value: !GetAtt StsRole.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-RoleArn"
+
+  ExternalId:
+    Description: External ID for assuming the role
+    Value: !Sub "${AWS::StackName}-external-id"
+    Export:
+      Name: !Sub "${AWS::StackName}-ExternalId"
