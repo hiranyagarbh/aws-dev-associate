@@ -1,0 +1,159 @@
+#!/bin/bash
+
+# Function to check if AWS CLI command succeeded
+check_command() {
+    if [ $? -ne 0 ]; then
+        echo "Error: $1"
+        exit 1
+    fi
+}
+
+# Function to validate resource creation
+validate_resource() {
+    local resource_id=$1
+    local resource_type=$2
+
+    if [ -z "$resource_id" ] || [ "$resource_id" = "None" ]; then
+        echo "Error: Failed to create $resource_type"
+        exit 1
+    fi
+    echo "Successfully created $resource_type: $resource_id"
+}
+
+# Default values - can be overridden with positional arguments
+VPC_NAME=${1:-"my-vpc-12"}
+VPC_CIDR=${2:-"172.31.0.0/16"}
+SUBNET_CIDR=${3:-"172.31.0.0/24"}
+AVAILABILITY_ZONE=${4:-"us-east-1a"}
+REGION=${5:-"us-east-1"}
+
+
+
+echo "Starting VPC creation with the following configuration:"
+echo "  VPC Name: $VPC_NAME"
+echo "  VPC CIDR: $VPC_CIDR"
+echo "  Subnet CIDR: $SUBNET_CIDR"
+echo "  Availability Zone: $AVAILABILITY_ZONE"
+echo "  Region: $REGION"
+echo ""
+
+# Create VPC
+echo "Creating VPC..."
+VPC_ID=$(aws ec2 create-vpc \
+    --cidr-block "$VPC_CIDR" \
+    --region $REGION \
+    --tag-specifications "ResourceType=vpc,Tags=[{Key=Name,Value=$VPC_NAME}]" \
+    --query 'Vpc.{VpcId:VpcId}' \
+    --output text 2>/dev/null)
+
+check_command "Failed to create VPC"
+validate_resource "$VPC_ID" "VPC"
+
+echo "Waiting for VPC to be available..."
+aws ec2 wait vpc-available --vpc-ids $VPC_ID --region $REGION
+check_command "VPC did not become available"
+
+echo ""
+echo "VPC Details:"
+aws ec2 describe-vpcs \
+    --vpc-ids $VPC_ID \
+    --query 'Vpcs[*].{VpcId: VpcId, CidrBlock: CidrBlock, State: State, Tags: Tags}' \
+    --output table \
+    --region $REGION
+
+# Create Internet Gateway
+echo ""
+echo "Creating Internet Gateway..."
+IGW_ID=$(aws ec2 create-internet-gateway \
+    --region $REGION \
+    --tag-specifications "ResourceType=internet-gateway,Tags=[{Key=Name,Value=$VPC_NAME-igw}]" \
+    --query 'InternetGateway.{InternetGatewayId:InternetGatewayId}' \
+    --output text 2>/dev/null)
+
+check_command "Failed to create Internet Gateway"
+validate_resource "$IGW_ID" "Internet Gateway"
+
+# Attach Internet Gateway to VPC
+echo "Attaching Internet Gateway to VPC..."
+aws ec2 attach-internet-gateway \
+    --vpc-id $VPC_ID \
+    --internet-gateway-id $IGW_ID \
+    --region $REGION
+
+check_command "Failed to attach Internet Gateway to VPC"
+echo "Successfully attached Internet Gateway to VPC"
+
+# Create Subnet
+echo ""
+echo "Creating subnet..."
+SUBNET_ID=$(aws ec2 create-subnet \
+    --vpc-id $VPC_ID \
+    --cidr-block "$SUBNET_CIDR" \
+    --availability-zone $AVAILABILITY_ZONE \
+    --tag-specifications "ResourceType=subnet,Tags=[{Key=Name,Value=$VPC_NAME-subnet}]" \
+    --query 'Subnet.{SubnetId:SubnetId}' \
+    --output text 2>/dev/null)
+
+check_command "Failed to create subnet"
+validate_resource "$SUBNET_ID" "Subnet"
+
+# Enable auto-assign public IP for subnet
+echo "Enabling auto-assign public IP for subnet..."
+aws ec2 modify-subnet-attribute \
+    --subnet-id $SUBNET_ID \
+    --map-public-ip-on-launch \
+    --region $REGION
+
+check_command "Failed to enable auto-assign public IP"
+echo "Successfully enabled auto-assign public IP for subnet"
+
+# Get the main route table
+echo ""
+echo "Getting main route table..."
+ROUTE_TABLE_ID=$(aws ec2 describe-route-tables \
+    --filters "Name=vpc-id,Values=$VPC_ID" "Name=association.main,Values=true" \
+    --query 'RouteTables[*].RouteTableId' \
+    --output text \
+    --region $REGION)
+
+check_command "Failed to get main route table"
+validate_resource "$ROUTE_TABLE_ID" "Route Table"
+
+# Add route to Internet Gateway
+echo "Adding route to Internet Gateway..."
+aws ec2 create-route \
+    --route-table-id $ROUTE_TABLE_ID \
+    --destination-cidr-block "0.0.0.0/0" \
+    --gateway-id $IGW_ID \
+    --region $REGION
+
+check_command "Failed to create route to Internet Gateway"
+echo "Successfully created route to Internet Gateway"
+
+# Display final configuration
+echo ""
+echo "=== VPC Creation Complete ==="
+echo "VPC ID: $VPC_ID"
+echo "Internet Gateway ID: $IGW_ID"
+echo "Subnet ID: $SUBNET_ID"
+echo "Route Table ID: $ROUTE_TABLE_ID"
+echo ""
+
+echo "Route Table Details:"
+aws ec2 describe-route-tables \
+    --route-table-ids $ROUTE_TABLE_ID \
+    --query 'RouteTables[*].{RouteTableId: RouteTableId, Routes: Routes}' \
+    --output table \
+    --region $REGION
+
+echo ""
+echo "Subnet Details:"
+aws ec2 describe-subnets \
+    --subnet-ids $SUBNET_ID \
+    --query 'Subnets[*].{SubnetId: SubnetId, CidrBlock: CidrBlock, AvailabilityZone: AvailabilityZone, State: State}' \
+    --output table \
+    --region $REGION
+
+echo ""
+echo "To delete this VPC, run:"
+echo "./delete $VPC_ID"

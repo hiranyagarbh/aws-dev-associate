@@ -1,0 +1,161 @@
+#!/bin/bash
+
+# Check if arguments are provided
+if [ -z "$1" ]; then
+    echo "Usage: $0 <vpc-id>"
+    echo "Example: $0 vpc-0f9e1f56e28ec3c57"
+    exit 1
+else
+    export VPC_ID=$1
+fi
+
+echo "Starting cleanup of VPC: $VPC_ID"
+
+# Function to check if a resource exists
+check_resource() {
+    local resource_id=$1
+    if [ -z "$resource_id" ] || [ "$resource_id" = "None" ]; then
+        return 1
+    fi
+    return 0
+}
+
+# Delete NAT Gateways if any
+echo "Checking for NAT Gateways..."
+NAT_GATEWAYS=$(aws ec2 describe-nat-gateways \
+    --filter "Name=vpc-id,Values=$VPC_ID" "Name=state,Values=available" \
+    --query 'NatGateways[*].NatGatewayId' \
+    --output text \
+    --region us-east-1)
+
+if check_resource "$NAT_GATEWAYS"; then
+    for nat_gw in $NAT_GATEWAYS; do
+        echo "Deleting NAT Gateway: $nat_gw"
+        aws ec2 delete-nat-gateway --nat-gateway-id $nat_gw --region us-east-1
+    done
+
+    # Wait for NAT Gateways to be deleted
+    echo "Waiting for NAT Gateways to be deleted..."
+    sleep 60
+fi
+
+# Detach and Delete Internet Gateway
+echo "Checking for Internet Gateways..."
+IGW_ID=$(aws ec2 describe-internet-gateways \
+    --filters "Name=attachment.vpc-id,Values=$VPC_ID" \
+    --query 'InternetGateways[*].InternetGatewayId' \
+    --output text \
+    --region us-east-1)
+
+if check_resource "$IGW_ID"; then
+    echo "Detaching Internet Gateway: $IGW_ID"
+    aws ec2 detach-internet-gateway \
+        --internet-gateway-id $IGW_ID \
+        --vpc-id $VPC_ID \
+        --region us-east-1
+
+    echo "Deleting Internet Gateway: $IGW_ID"
+    aws ec2 delete-internet-gateway \
+        --internet-gateway-id $IGW_ID \
+        --region us-east-1
+fi
+
+# Delete Route Table Associations and Custom Route Tables
+echo "Checking for custom route tables..."
+ROUTE_TABLES=$(aws ec2 describe-route-tables \
+    --filters "Name=vpc-id,Values=$VPC_ID" \
+    --query 'RouteTables[?Associations[0].Main!=`true`].RouteTableId' \
+    --output text \
+    --region us-east-1)
+
+if check_resource "$ROUTE_TABLES"; then
+    for rt in $ROUTE_TABLES; do
+        echo "Deleting route table: $rt"
+
+        # Delete associations first
+        ASSOCIATIONS=$(aws ec2 describe-route-tables \
+            --route-table-ids $rt \
+            --query 'RouteTables[*].Associations[?Main!=`true`].RouteTableAssociationId' \
+            --output text \
+            --region us-east-1)
+
+        if check_resource "$ASSOCIATIONS"; then
+            for assoc in $ASSOCIATIONS; do
+                echo "  Disassociating route table association: $assoc"
+                aws ec2 disassociate-route-table \
+                    --association-id $assoc \
+                    --region us-east-1
+            done
+        fi
+
+        # Delete the route table
+        aws ec2 delete-route-table \
+            --route-table-id $rt \
+            --region us-east-1
+    done
+fi
+
+# Delete Network ACL Associations and Custom Network ACLs
+echo "Checking for custom network ACLs..."
+NETWORK_ACLS=$(aws ec2 describe-network-acls \
+    --filters "Name=vpc-id,Values=$VPC_ID" \
+    --query 'NetworkAcls[?IsDefault!=`true`].NetworkAclId' \
+    --output text \
+    --region us-east-1)
+
+if check_resource "$NETWORK_ACLS"; then
+    for acl in $NETWORK_ACLS; do
+        echo "Deleting network ACL: $acl"
+        aws ec2 delete-network-acl \
+            --network-acl-id $acl \
+            --region us-east-1
+    done
+fi
+
+# Delete Custom Security Groups
+echo "Checking for custom security groups..."
+SECURITY_GROUPS=$(aws ec2 describe-security-groups \
+    --filters "Name=vpc-id,Values=$VPC_ID" \
+    --query 'SecurityGroups[?GroupName!=`default`].GroupId' \
+    --output text \
+    --region us-east-1)
+
+if check_resource "$SECURITY_GROUPS"; then
+    for sg in $SECURITY_GROUPS; do
+        echo "Deleting security group: $sg"
+        aws ec2 delete-security-group \
+            --group-id $sg \
+            --region us-east-1
+    done
+fi
+
+# Delete Subnets
+echo "Checking for subnets..."
+SUBNETS=$(aws ec2 describe-subnets \
+    --filters "Name=vpc-id,Values=$VPC_ID" \
+    --query 'Subnets[*].SubnetId' \
+    --output text \
+    --region us-east-1)
+
+if check_resource "$SUBNETS"; then
+    for subnet in $SUBNETS; do
+        echo "Deleting subnet: $subnet"
+        aws ec2 delete-subnet \
+            --subnet-id $subnet \
+            --region us-east-1
+    done
+fi
+
+# Delete VPC
+echo "Deleting VPC: $VPC_ID"
+aws ec2 delete-vpc \
+    --vpc-id $VPC_ID \
+    --region us-east-1
+
+if [ $? -eq 0 ]; then
+    echo "Successfully deleted VPC: $VPC_ID"
+else
+    echo "Failed to delete VPC: $VPC_ID"
+    echo "Please check for remaining dependencies manually"
+    exit 1
+fi
