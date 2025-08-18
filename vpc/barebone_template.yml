@@ -1,0 +1,94 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Launch a simple EC2 for use with testing VPCs
+Parameters:
+  InstanceType:
+    Type: String
+    Default: t2.micro
+  VpcId:
+    Type: String
+    Default: vpc-0cf30e42a239553ed
+  ImageId:
+    Type: String
+    Default: ami-0de716d6197524dd9
+  SubnetId:
+    Type: String
+    Default: subnet-093932062ae98981d
+Resources:
+  SSMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref SSMRole
+  MyEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      InstanceType: !Ref InstanceType
+      ImageId: !Ref ImageId
+      NetworkInterfaces:
+        - DeviceIndex: 0
+          SubnetId: !Ref SubnetId
+          AssociatePublicIpAddress: true
+          GroupSet:
+            - !GetAtt SG.GroupId
+          DeleteOnTermination: true
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash
+          yum update -y
+          yum install -y httpd
+          systemctl start httpd
+          systemctl enable httpd
+          echo "<html>
+          <head>
+            <title>EC2 Test Instance</title>
+          </head>
+          <body>
+            <h1>Welcome to Your EC2 Test Instance</h1>
+            <h2>Instance Information</h2>
+            <p>This Apache web server is running on Amazon Linux 2 in your VPC test environment.</p>
+            <h3>Quick Links</h3>
+            <ul>
+              <li><a href=\"/\">Home</a></li>
+              <li><a href=\"/server-info\">Server Info</a> (if enabled)</li>
+              <li><a href=\"/server-status\">Server Status</a> (if enabled)</li>
+            </ul>
+            <h3>System Details</h3>
+            <p><strong>Server:</strong> Apache HTTP Server</p>
+            <p><strong>Operating System:</strong> Amazon Linux 2</p>
+            <p><strong>Instance Type:</strong> Testing Configuration</p>
+            <h3>Testing Notes</h3>
+            <p>This instance was created for VPC testing purposes. You can modify this page by editing <code>/var/www/html/index.html</code> on the server.</p>
+            <hr>
+            <footer>
+              <p><em>Generated on: $(date)</em></p>
+            </footer>
+          </body>
+          </html>" > /var/www/html/index.html
+  SG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow http to client host
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
