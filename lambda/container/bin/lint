@@ -1,0 +1,6 @@
+#!/bin/bash
+
+rootpath=$(realpath ..)
+
+echo "CFN Initiating"
+cfn-lint "${rootpath}/template.yml"
