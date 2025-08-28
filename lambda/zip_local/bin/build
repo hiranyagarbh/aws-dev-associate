@@ -1,0 +1,10 @@
+#!/bin/bash
+
+rootpath=$(realpath ..)
+template_path="${rootpath}/template.yml"
+# function_path="${rootpath}/function"
+
+echo "== SAM Build Started"
+echo "using template ${template_path}"
+sam build \
+--template-file ${template_path}

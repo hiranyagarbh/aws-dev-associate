@@ -1,0 +1,11 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless::Function
+Description: A basic Lambda function that uses the AWS Serverless Application Model (AWS SAM) to create a serverless function.
+Resources:
+  InlineLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: function.handler
+      Runtime: python3.13
+      PackageType: Zip
+      CodeUri: "./function/"
