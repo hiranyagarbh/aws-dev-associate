@@ -6,5 +6,5 @@ echo "== SAM deploy..."
 
 sam deploy \
   --template-file "./.aws-sam/build/template.yaml" \
-  --stack-name "inline-lamba-py" \
+  --stack-name "inline-lambda-py" \
   --capabilities "CAPABILITY_IAM"
