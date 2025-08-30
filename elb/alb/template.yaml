@@ -1,0 +1,155 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  This CloudFormation template deploys an Application Load Balancer (ALB), an EC2 instance,
+  and associated resources like security groups and an IAM role for SSM.
+
+Parameters:
+  # These subnets must be in different AZs for high availability
+  Subnets:
+    Type: CommaDelimitedList
+    Description: A comma-separated list of at least two subnet IDs for the ALB.
+    Default: subnet-08f123456789,subnet-123456789012
+
+  myVPC:
+    Type: String
+    Description: VPC ID for the resources.
+    Default: vpc-1234567890abcdef
+
+  # ARN of the ACM certificate for the HTTPS listener
+  CertificateArn:
+    Type: String
+    Description: ARN of the ACM certificate for the HTTPS listener.
+    Default: arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012
+
+  # Latest Amazon Linux 2 AMI ID
+  LatestAmiId:
+    Type: "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>"
+    Default: "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
+    Description: The latest Amazon Linux 2 AMI ID.
+
+Resources:
+  SSMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+
+  SSMInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref SSMRole
+
+  # Security Group for the EC2 Instance
+  EC2InstanceSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group for the EC2 Instance
+      VpcId: !Ref myVPC
+      SecurityGroupIngress:
+        # Allow inbound HTTP traffic from the ALB's security group
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId: !Ref ALBsg
+
+  # EC2 instance that will serve as the backend for the ALB
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: !Ref LatestAmiId
+      SecurityGroupIds:
+        - !Ref EC2InstanceSG
+      IamInstanceProfile: !Ref SSMInstanceProfile
+      SubnetId: !Select [0, !Ref Subnets]
+      Tags:
+        - Key: Name
+          Value: MyWebServerInstance
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash
+          yum update -y
+          yum install -y httpd
+          systemctl start httpd
+          systemctl enable httpd
+          echo "<h1>Hello from your EC2 instance!</h1>" > /var/www/html/index.html
+          echo "OK" > /var/www/html/health
+
+  ALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: MyALB
+      Type: application
+      IpAddressType: ipv4
+      Scheme: internet-facing
+      Subnets: !Ref Subnets
+      SecurityGroups:
+        - !Ref ALBsg
+
+  # Security Group for the ALB to control inbound and outbound traffic
+  ALBsg:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group for the ALB
+      VpcId: !Ref myVPC
+      SecurityGroupIngress:
+        # Allows inbound HTTP traffic from anywhere
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        # Allows inbound HTTPS traffic from anywhere
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        # Allow outbound traffic to the EC2 instance security group on port 80
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          DestinationSecurityGroupId: !Ref EC2InstanceSG
+
+  # The HTTPS listener for the ALB
+  HTTPSListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ALB
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: !Ref CertificateArn
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+
+  # The Target Group for the ALB
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: MyTargetGroup
+      Protocol: HTTP
+      Port: 80
+      VpcId: !Ref myVPC
+      HealthCheckPath: /health
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthCheckProtocol: HTTP
+      HealthCheckPort: traffic-port
+      HealthCheckEnabled: true
+      HealthCheckHealthyThresholdCount: 2
+      HealthCheckUnhealthyThresholdCount: 2
+      TargetType: instance
+      Matcher:
+        HttpCode: 200
+      Targets:
+        - Id: !Ref EC2Instance
+          Port: 80
