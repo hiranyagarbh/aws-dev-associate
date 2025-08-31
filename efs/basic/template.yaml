@@ -1,0 +1,64 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "AWS CloudFormation template for deploying an Amazon Elastic File System (EFS) file system"
+
+Parameters:
+  InstanceType:
+    Type: String
+    Default: t2.micro
+  VPCID:
+    Type: String
+    Default: vpc-12345678
+  SubnetID:
+    Type: String
+    Default: subnet-12345678
+  ImageID:
+    Type: String
+    Default: ami-12345678
+
+Resources:
+  FileSystem:
+    Type: AWS::EFS::FileSystem
+    Properties:
+      BackupPolicy:
+        Status: DISABLED
+      PerformanceMode: generalPurpose
+      Encrypted: true
+      # FileSystemPolicy:
+      #   Version: '2012-10-17'
+      #   Statement:
+      #     - Effect: Allow
+      #       Principal: '*'
+      #       Action: 'elasticfilesystem:ClientMount'
+      #       Resource: !Sub 'arn:aws:elasticfilesystem:${AWS::Region}:${AWS::AccountId}:file-system/${FileSystemId}'
+      #     - Effect: Allow
+      #       Principal: '*'
+      #       Action: 'elasticfilesystem:ClientWrite'
+      #       Resource: !Sub 'arn:aws:elasticfilesystem:${AWS::Region}:${AWS::AccountId}:file-system/${FileSystemId}'
+      #     - Effect: Allow
+      #       Principal: '*'
+      #       Action: 'elasticfilesystem:ClientRootAccess'
+      #       Resource: !Sub 'arn:aws:elasticfilesystem:${AWS::Region}:${AWS::AccountId}:file-system/${FileSystemId}'
+
+  MountTarget:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref FileSystem
+      SubnetId: !Ref SubnetID
+      SecurityGroups:
+        - !Ref SecurityGroup
+
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH access from anywhere
+      VpcId: !Ref VPCID
+      SecurityGroupIngress:
+        - IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+          SecurityGroupEgress:
+            - IpProtocol: -1
+              FromPort: -1
+              ToPort: -1
+              CidrIp: 0.0.0.0/0
