@@ -1,0 +1,13 @@
+#!/bin/bash
+
+echo "== Deploying EC2 instance"
+
+STACK_NAME="aws-ebs-basic"
+
+
+aws cloudformation deploy \
+--template-file template.yaml \
+--stack-name $STACK_NAME \
+--capabilities CAPABILITY_NAMED_IAM \
+--no-execute-changeset \
+--region us-east-1
