@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+echo "== deploy ec2 instance"
+
+STACK_NAME="aws-ebs-resize"
+
+aws cloudformation deploy \
+--template-file template.yaml \
+--capabilities CAPABILITY_NAMED_IAM \
+--no-execute-changeset \
+--region us-east-1 \
+--stack-name $STACK_NAME
