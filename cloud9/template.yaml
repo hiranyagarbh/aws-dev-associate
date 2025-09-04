@@ -1,0 +1,24 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "AWS CloudFormation template for deploying an AWS Cloud9 environment"
+
+Parameters:
+  InstanceType:
+    Type: String
+    Default: t2.micro
+  SubnetId:
+    Type: String
+    Default: "subnet-06cd541b221ed6098"
+  ImageId:
+    Type: String
+    Default: "ami-00ca32bbc84273381"
+
+Resources:
+  Cloud9Environment:
+    Type: "AWS::Cloud9::EnvironmentEC2"
+    Properties:
+      Name: "MyCloud9Environment"
+      Description: "My Cloud9 Environment"
+      AutomaticStopTimeMinutes: 30
+      InstanceType: !Ref InstanceType
+      SubnetId: !Ref SubnetId
+      ImageId: !Ref ImageId
